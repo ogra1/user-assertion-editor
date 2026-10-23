@@ -1,0 +1,27 @@
+name: user_assertion_editor
+description: "Create and sign system-user assertions for Ubuntu Core devices"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  yaru: ^10.2.0
+  yaru_icons: ^2.2.0
+  file_selector: ^1.0.3
+  shared_preferences: ^2.5.5
+  path: ^1.9.0
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
