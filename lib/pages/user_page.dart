@@ -293,17 +293,23 @@ class _UserPageState extends State<UserPage> {
                     const SizedBox(width: 16),
                     // Push the button down by exactly one field-label height +
                     // gap so its top edge lines up with the two input boxes
-                    // (the FormTextField renders a label above the field).
+                    // (the FormTextField renders a label above the field), and
+                    // pin it to the input box height so its bottom edge is
+                    // flush too (a default ElevatedButton is ~2px taller).
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(' ',
                             style: Theme.of(context).textTheme.labelLarge),
                         const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          icon: const Icon(YaruIcons.shield),
-                          label: const Text('Hash it'),
-                          onPressed: _hashPassword,
+                        SizedBox(
+                          width: 120,
+                          height: 35,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(YaruIcons.shield),
+                            label: const Text('Hash it'),
+                            onPressed: _hashPassword,
+                          ),
                         ),
                       ],
                     ),
