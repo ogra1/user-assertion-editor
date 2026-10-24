@@ -17,7 +17,6 @@ class DevicePage extends StatefulWidget {
 class _DevicePageState extends State<DevicePage> {
   final _brand = TextEditingController();
   final _authority = TextEditingController();
-  final _series = TextEditingController();
   bool _mirrorAuthority = true;
 
   @override
@@ -26,21 +25,18 @@ class _DevicePageState extends State<DevicePage> {
     final u = widget.state.model;
     _brand.text = u.brandId;
     _authority.text = u.authorityId;
-    _series.text = u.series;
   }
 
   @override
   void dispose() {
     _brand.dispose();
     _authority.dispose();
-    _series.dispose();
     super.dispose();
   }
 
   void _commit() {
     final u = widget.state.model;
     u.brandId = _brand.text.trim();
-    u.series = _series.text.trim();
     if (_mirrorAuthority) {
       u.authorityId = _brand.text.trim();
     } else {
@@ -93,23 +89,17 @@ class _DevicePageState extends State<DevicePage> {
                   _commit();
                 },
               ),
-              const SizedBox(height: 16),
-              FormTextField(
-                label: 'Series',
-                controller: _series,
-                hint: '16',
-                helper: 'The snapd series of the target devices. "16" is the '
-                    'default series and is correct for essentially all '
-                    'current systems.',
-                onChanged: (_) => _commit(),
-              ),
             ],
           ),
         ),
         const SizedBox(height: 24),
         YaruSection(
           headline: const Text('Models'),
+          // Left-align the (narrower) chip box regardless of how wide the
+          // intro paragraph above it wraps — otherwise the box appears
+          // centred under the heading.
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Leave empty to make a "global" assertion that works on any '
@@ -139,6 +129,7 @@ class _DevicePageState extends State<DevicePage> {
         YaruSection(
           headline: const Text('Device serials (optional)'),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Restrict the assertion to specific devices. Requires exactly '

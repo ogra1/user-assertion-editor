@@ -75,8 +75,8 @@ class ImportService {
             u.since = _parseDate(v);
           case 'until':
             u.until = _parseDate(v);
-          case 'series':
-            u.series = v;
+          // 'series' is intentionally ignored: the editor always emits the
+          // fixed series "16" (see AssertionBuilder).
           default:
         }
       }
@@ -90,12 +90,6 @@ class ImportService {
     str('password');
     str('since');
     str('until');
-    if (h['series'] is String) {
-      u.series = h['series'] as String;
-    } else if (h['series'] is List) {
-      u.series = (h['series'] as List).first?.toString() ?? 'ubuntu';
-    }
-
     if (h['models'] is List) {
       u.models
         ..clear()

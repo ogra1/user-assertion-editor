@@ -66,7 +66,9 @@ class WizardState extends ChangeNotifier {
       ..forcePasswordChange = imported.forcePasswordChange
       ..brandId = imported.brandId
       ..authorityId = imported.authorityId
-      ..series = imported.series
+      // Series stays fixed at '16' (see AssertionBuilder); imports never
+      // override it, so a re-signed assertion always matches snapd's
+      // only current series.
       ..since = imported.since
       ..until = imported.until
       ..userUntilExpiration = imported.userUntilExpiration;

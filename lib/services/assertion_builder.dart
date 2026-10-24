@@ -22,7 +22,10 @@ class AssertionBuilder {
       'format': '2',
       'authority-id': u.authorityId.trim(),
       'brand-id': u.brandId.trim(),
-      'series': [u.series.trim()],
+      // Series is fixed at "16": it has not changed since snapd existed and
+      // is the only current series. No user input — re-add a field here only
+      // if snapd ever ships another series.
+      'series': ['16'],
       'email': u.email.trim(),
     };
 
@@ -98,11 +101,6 @@ class AssertionValidation {
     }
     if (u.authorityId.trim().isEmpty) {
       e.add('Authority ID is required (defaults to the brand ID).');
-    }
-    if (u.series.trim().isEmpty) {
-      e.add('Series is required.');
-    } else if (!RegExp(r'^\d+$').hasMatch(u.series.trim())) {
-      e.add('Series should be numeric (e.g. "16").');
     }
     if (u.hasSerials) {
       if (u.models.length != 1) {

@@ -24,9 +24,6 @@ class SystemUser {
   /// Store account ID of the brand (defaults to [authorityId]).
   String brandId = '';
   String authorityId = '';
-  /// The snapd series; "16" is the default series that has been in use
-  /// since snapd's inception and is still the only current one.
-  String series = '16';
 
   /// Models the assertion applies to. Empty = "global" (any model of the
   /// brand), which snapd limits to 365-day validity.
