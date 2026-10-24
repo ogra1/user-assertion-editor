@@ -5,6 +5,7 @@ import 'package:yaru/yaru.dart';
 import '../models/wizard_state.dart';
 import '../models/wizard_step.dart';
 import '../services/status_bar_service.dart';
+import '../theme/status_colors.dart';
 import '../widgets/status_bar_content.dart';
 import '../widgets/truncating_tooltip_text.dart';
 import 'device_page.dart';
@@ -275,18 +276,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             if (wide)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  _current.description,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ),
-            if (wide)
               Container(height: 1, color: Theme.of(context).dividerColor),
           ],
         );
@@ -369,8 +358,11 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-/// A step icon: a filled checkmark once the step is complete, a dimmed
-/// icon when the step is still locked.
+/// A step icon, mirroring the model-builder rail: the step's own
+/// icon is always shown (so the collapsed rail is still readable as
+/// person / device / schedule / key / download), and a small green
+/// check badge is overlaid once the step is complete. Locked steps are
+/// dimmed.
 class _StepIcon extends StatelessWidget {
   final IconData icon;
   final bool complete;
@@ -386,19 +378,29 @@ class _StepIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (complete) {
-      return Icon(Icons.check_circle,
-          color: selected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurfaceVariant);
-    }
-    return Icon(
-      icon,
-      color: enabled
-          ? (selected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurfaceVariant)
-          : Theme.of(context).colorScheme.outline,
+    final theme = Theme.of(context);
+    final baseColor = enabled
+        ? (selected ? theme.colorScheme.primary : null)
+        : theme.disabledColor;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon, color: baseColor),
+        if (complete)
+          Positioned(
+            right: -4,
+            top: -4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle,
+                  size: 14, color: StatusColors.success),
+            ),
+          ),
+      ],
     );
   }
 }
