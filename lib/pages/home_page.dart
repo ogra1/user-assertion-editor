@@ -35,10 +35,18 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  /// Switches the visible step and records that the user has reached it, so
+  /// the rail checkmark for that step (and the steps it implies) can appear.
+  void _setCurrent(WizardStep step) {
+    if (step == _current) return;
+    _state.markVisited(step);
+    setState(() => _current = step);
+  }
+
   void _goTo(WizardStep step) {
     if (_state.isStepEnabled(step)) {
       StatusBarService.instance.clear();
-      setState(() => _current = step);
+      _setCurrent(step);
     } else {
       _showBlockedStatus(step);
     }
@@ -70,7 +78,7 @@ class _HomePageState extends State<HomePage> {
   void _back() {
     if (_canGoBack) {
       StatusBarService.instance.clear();
-      setState(() => _current = WizardStep.values[_current.index - 1]);
+      _setCurrent(WizardStep.values[_current.index - 1]);
     }
   }
 

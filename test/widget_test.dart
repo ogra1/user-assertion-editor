@@ -81,6 +81,70 @@ void main() {
     expect(state.isStepEnabled(WizardStep.export), isTrue);
   });
 
+  test('rail checkmark: a default-valid step shows no check until visited (regression: Timing check on startup)', () {
+    final state = WizardState();
+    // Fresh start on the User step. Timing is valid out of the box (the
+    // default model ships a 30-day window), but the user has not been to
+    // it yet, so it must NOT wear a check.
+    expect(state.showStepComplete(WizardStep.user), isFalse);
+    expect(state.isStepComplete(WizardStep.timing), isTrue,
+        reason: 'defaults make Timing valid');
+    expect(state.showStepComplete(WizardStep.timing), isFalse,
+        reason: 'not yet visited');
+
+    // Reaching the step turns the check on.
+    state.markVisited(WizardStep.timing);
+    expect(state.showStepComplete(WizardStep.timing), isTrue);
+
+    // Visiting a step only clears a check if the step is still valid.
+    state.model.since = null;
+    expect(state.showStepComplete(WizardStep.timing), isFalse);
+    state.model.since = DateTime.now().toUtc();
+    expect(state.showStepComplete(WizardStep.timing), isTrue);
+  });
+
+  test('rail checkmark: jumping past a step (without opening it) still checks it', () {
+    final state = WizardState();
+    // Complete User + Device so the later steps are reachable...
+    state.model
+      ..username = 'admin'
+      ..email = 'admin@example.com'
+      ..brandId = 'mybrand'
+      ..authorityId = 'mybrand'
+      ..sshKeys.add('ssh-ed25519 AAA x@y');
+    expect(state.isStepComplete(WizardStep.user), isTrue);
+    expect(state.isStepComplete(WizardStep.device), isTrue);
+
+    // ...and jump straight to the Signing Key step, never opening Timing.
+    state.markVisited(WizardStep.user);
+    state.markVisited(WizardStep.device);
+    state.markVisited(WizardStep.sign);
+    // Timing was valid the whole time and was passed over -> checked.
+    expect(state.showStepComplete(WizardStep.timing), isTrue,
+        reason: 'visited a following page');
+    // User/Device were also visited and valid -> checked.
+    expect(state.showStepComplete(WizardStep.user), isTrue);
+    expect(state.showStepComplete(WizardStep.device), isTrue);
+    // Sign is not valid (no key) -> no check despite being visited.
+    expect(state.showStepComplete(WizardStep.sign), isFalse);
+  });
+
+  test('rail checkmark: markVisited never affects navigation gating', () {
+    final state = WizardState();
+    // User is incomplete; Device stays locked regardless of visitation.
+    expect(state.isStepEnabled(WizardStep.device), isFalse);
+    state.markVisited(WizardStep.device);
+    expect(state.isStepEnabled(WizardStep.device), isFalse,
+        reason: 'gating is validity-based, not visitation-based');
+    state.model
+      ..username = 'admin'
+      ..email = 'admin@example.com'
+      ..sshKeys.add('ssh-ed25519 AAA x@y')
+      ..brandId = 'mybrand'
+      ..authorityId = 'mybrand';
+    expect(state.isStepEnabled(WizardStep.device), isTrue);
+  });
+
 
   testWidgets('home page renders the User step by default', (tester) async {
     await tester.pumpWidget(YaruTheme(

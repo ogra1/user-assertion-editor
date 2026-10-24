@@ -16,6 +16,13 @@ class WizardState extends ChangeNotifier {
   /// alone cannot reach.
   int modelGeneration = 0;
 
+  /// The wizard steps the user has actually been to. The rail checkmark is
+  /// gated on this in addition to validity, so a step that is *valid by
+  /// default* — like Timing, which ships with a 30-day window — does not
+  /// wear a green check before the user has visited it (or a following
+  /// page). Purely cosmetic; navigation gating is unaffected.
+  final Set<WizardStep> _visited = {WizardStep.user};
+
   String? selectedKeyName;
   SignOutput? signOutput;
 
@@ -58,9 +65,21 @@ class WizardState extends ChangeNotifier {
     return true;
   }
 
-  /// Checkmark in the nav rail: complete, except the final Export step
-  /// which shows a check once a valid signature exists.
-  bool showStepComplete(WizardStep step) => isStepComplete(step);
+  /// Records navigation to [step]. Called by the shell whenever the current
+  /// step changes (rail tap, Next, or Back).
+  void markVisited(WizardStep step) {
+    if (_visited.add(step)) {
+      notifyListeners();
+    }
+  }
+
+  /// Checkmark in the nav rail: the step is valid AND the user has visited
+  /// that page or one of the following pages. This is what stops a
+  /// default-valid step such as Timing from showing a check on startup.
+  bool showStepComplete(WizardStep step) {
+    if (!isStepComplete(step)) return false;
+    return _visited.any((v) => v.index >= step.index);
+  }
 
   /// Replaces the model (e.g. on import) and invalidates the signature.
   void replaceModel(SystemUser imported) {
