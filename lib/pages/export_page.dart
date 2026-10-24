@@ -24,11 +24,9 @@ class ExportPage extends StatefulWidget {
 }
 
 class _ExportPageState extends State<ExportPage> {
-  static const _prefAlsoSaveJson = 'export.alsoSaveJson';
   static const _prefLastDir = 'export.lastDir';
 
   bool _signing = false;
-  bool _alsoSaveJson = false;
   String? _lastDir;
   String? _savedPath;
   String? _jsonSavedPath;
@@ -44,13 +42,9 @@ class _ExportPageState extends State<ExportPage> {
   Future<void> _loadPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getBool(_prefAlsoSaveJson);
       final dir = prefs.getString(_prefLastDir);
-      if (mounted) {
-        setState(() {
-          if (saved != null) _alsoSaveJson = saved;
-          if (dir != null && dir.isNotEmpty) _lastDir = dir;
-        });
+      if (mounted && dir != null && dir.isNotEmpty) {
+        setState(() => _lastDir = dir);
       }
     } catch (_) {}
   }
@@ -124,9 +118,6 @@ class _ExportPageState extends State<ExportPage> {
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_prefLastDir, _lastDir!);
-        if (json) {
-          await prefs.setBool(_prefAlsoSaveJson, _alsoSaveJson);
-        }
       } catch (_) {}
       setState(() {
         if (json) {
@@ -175,6 +166,10 @@ class _ExportPageState extends State<ExportPage> {
         YaruSection(
           headline: const Text('Sign'),
           child: Column(
+            // Left-align the key line, the signed-status line and the action
+            // button row (the column defaults to center, which reads as a
+            // floating, centered row once the buttons no longer fill it).
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Selected-key context line (no button here anymore).
               Row(
@@ -248,14 +243,6 @@ class _ExportPageState extends State<ExportPage> {
                     onPressed: output == null
                         ? null
                         : () => _copy(output.signedChain),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Also keep a copy of the JSON'),
-                    value: _alsoSaveJson,
-                    onChanged: (v) =>
-                        setState(() => _alsoSaveJson = v ?? false),
                   ),
                 ],
               ),
