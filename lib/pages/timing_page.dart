@@ -212,10 +212,12 @@ class _TimingPageState extends State<TimingPage> {
 
   static String _fmtDuration(Duration d) {
     final days = d.inDays;
-    if (days < 365) return '$days days';
+    String dayWord(int n) => n == 1 ? 'day' : 'days';
+    if (days < 365) return '$days ${dayWord(days)}';
     final years = days ~/ 365;
     final rem = days % 365;
-    return rem == 0 ? '$years years' : '$years years, $rem days';
+    final yearWord = years == 1 ? '1 year' : '$years years';
+    return rem == 0 ? yearWord : '$yearWord, $rem ${dayWord(rem)}';
   }
 }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:user_assertion_editor/models/wizard_state.dart';
+import 'package:user_assertion_editor/pages/timing_page.dart';
 
 /// Regression: the date picker's *manual* text-entry format must follow the
 /// system locale. This only works if the app ships the global localization
@@ -57,5 +59,28 @@ void main() {
     final txt = await filledText(tester, const Locale('en', 'US'));
     expect(txt, matches(RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$')));
     expect(txt, startsWith('10/5')); // month-first, slash, no zero-pad
+  });
+
+  testWidgets('duration line is singular for 1 year and 1 day (regression: "1 years")', (tester) async {
+    final state = WizardState();
+    final now = DateTime.now().toUtc();
+    state.model
+      ..since = now
+      ..until = now.add(const Duration(days: 365));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: TimingPage(state: state)),
+    ));
+    expect(find.text('Valid for 1 year.'), findsOneWidget);
+    expect(find.textContaining('years'), findsNothing);
+
+    // A one-day window must also read singular.
+    state.model
+      ..since = now
+      ..until = now.add(const Duration(days: 1));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: TimingPage(state: state)),
+    ));
+    expect(find.text('Valid for 1 day.'), findsOneWidget);
+    state.dispose();
   });
 }
