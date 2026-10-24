@@ -5,6 +5,7 @@ import 'package:yaru/yaru.dart';
 import 'package:user_assertion_editor/models/system_user_model.dart';
 import 'package:user_assertion_editor/models/wizard_state.dart';
 import 'package:user_assertion_editor/models/wizard_step.dart';
+import 'package:user_assertion_editor/pages/export_page.dart';
 import 'package:user_assertion_editor/pages/home_page.dart';
 import 'package:user_assertion_editor/pages/user_page.dart';
 import 'package:user_assertion_editor/widgets/form_fields.dart';
@@ -127,6 +128,70 @@ void main() {
     expect(state.showStepComplete(WizardStep.device), isTrue);
     // Sign is not valid (no key) -> no check despite being visited.
     expect(state.showStepComplete(WizardStep.sign), isFalse);
+  });
+
+  testWidgets('export preview scrollbar shares its controller (regression: no ScrollPosition attached when scrolling)', (tester) async {
+    final state = WizardState();
+    state.selectedKeyName = 'testkey';
+    final now = DateTime.now().toUtc();
+    state.model
+      ..username = 'admin'
+      ..email = 'admin@example.com'
+      ..brandId = 'mybrand'
+      ..authorityId = 'mybrand'
+      ..since = now
+      ..until = now.add(const Duration(days: 30))
+      ..sshKeys.add('ssh-ed25519 AAA x@y');
+    // A long header so the fixed-height preview actually overflows and can
+    // be scrolled.
+    final long = List.generate(200, (i) => '{ "line-$i": "value-$i" }').join('\n');
+    state.model.jsonHeader = long;
+    state.setSignOutput(SignOutput(
+      signedChain: long,
+      jsonHeader: long,
+      report: const VerificationReport([
+        VerificationCheck('Structure', CheckStatus.pass, 'ok'),
+      ]),
+      signedAt: now,
+    ));
+
+    // Desktop-sized surface: the Export page's Preview header row (segmented
+    // tabs + Show/Hide) needs the app's real width; the 800px test default
+    // would report an unrelated layout overflow.
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+    });
+
+    await tester.pumpWidget(YaruTheme(
+      builder: (context, yaru, child) => MaterialApp(
+        theme: yaru.theme,
+        darkTheme: yaru.darkTheme,
+        home: Scaffold(body: ExportPage(state: state)),
+      ),
+    ));
+    await tester.pump();
+
+    // Structural guarantee: the Scrollbar and the preview scroller must share
+    // one controller. A Scrollbar with no/empty controller is exactly what
+    // threw "has no ScrollPosition attached".
+    final scrollbar = tester.widget<Scrollbar>(find.byType(Scrollbar));
+    final scrollview =
+        tester.widget<SingleChildScrollView>(find.byType(SingleChildScrollView));
+    expect(scrollbar.controller, isNotNull,
+        reason: 'the preview Scrollbar must be given a controller');
+    expect(identical(scrollbar.controller, scrollview.controller), isTrue,
+        reason: 'Scrollbar and the preview SingleChildScrollView must share a controller');
+
+    // Behavioral: scrolling the preview must not throw.
+    await tester.drag(find.byType(SingleChildScrollView),
+        const Offset(0, -300));
+    await tester.pump();
+    expect(tester.takeException(), isNull,
+        reason: 'scrolling the preview must not throw');
+    state.dispose();
   });
 
   test('rail checkmark: markVisited never affects navigation gating', () {

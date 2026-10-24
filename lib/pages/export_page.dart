@@ -400,7 +400,7 @@ class _ReportView extends StatelessWidget {
   }
 }
 
-class _PreviewPane extends StatelessWidget {
+class _PreviewPane extends StatefulWidget {
   final String tab;
   final ValueChanged<String> onTabChanged;
   final bool visible;
@@ -418,8 +418,25 @@ class _PreviewPane extends StatelessWidget {
   });
 
   @override
+  State<_PreviewPane> createState() => _PreviewPaneState();
+}
+
+class _PreviewPaneState extends State<_PreviewPane> {
+  /// Shared by the [Scrollbar] and the inner [SingleChildScrollView]. A
+  /// Scrollbar built without a controller has no ScrollPosition to track, so
+  /// scrolling the preview threw "The Scrollbar's ScrollController has no
+  /// ScrollPosition attached"; wiring both to one controller fixes it.
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final content = tab == 'chain' ? (chain ?? '') : json;
+    final content = widget.tab == 'chain' ? (widget.chain ?? '') : widget.json;
     return YaruSection(
       headline: Row(
         children: [
@@ -434,23 +451,25 @@ class _PreviewPane extends StatelessWidget {
                   label: Text('Signed chain'),
                   icon: Icon(YaruIcons.key_filled, size: 16)),
             ],
-            selected: {tab},
-            onSelectionChanged: (s) => onTabChanged(s.first),
+            selected: {widget.tab},
+            onSelectionChanged: (s) => widget.onTabChanged(s.first),
           ),
           const Spacer(),
           TextButton.icon(
-            icon: Icon(visible ? Icons.arrow_drop_down : Icons.arrow_forward,
+            icon: Icon(widget.visible ? Icons.arrow_drop_down : Icons.arrow_forward,
                 size: 18),
-            label: Text(visible ? 'Hide' : 'Show'),
-            onPressed: onToggle,
+            label: Text(widget.visible ? 'Hide' : 'Show'),
+            onPressed: widget.onToggle,
           ),
         ],
       ),
-      child: visible
+      child: widget.visible
           ? SizedBox(
-              height: chain != null && tab == 'chain' ? 260 : 220,
+              height: widget.chain != null && widget.tab == 'chain' ? 260 : 220,
               child: Scrollbar(
+                controller: _scroll,
                 child: SingleChildScrollView(
+                  controller: _scroll,
                   child: SelectableText(
                     content.isEmpty ? '(not signed yet)' : content,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
