@@ -176,6 +176,7 @@ class _ExportPageState extends State<ExportPage> {
           headline: const Text('Sign'),
           child: Column(
             children: [
+              // Selected-key context line (no button here anymore).
               Row(
                 children: [
                   if (keyName != null) ...[
@@ -190,18 +191,6 @@ class _ExportPageState extends State<ExportPage> {
                     ),
                   ] else
                     const Text('No key selected (see Signing Key step).'),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    icon: _signing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(YaruIcons.shield),
-                    label: Text(signed ? 'Re-sign' : 'Sign assertion'),
-                    onPressed:
-                        (_signing || keyName == null) ? null : _sign,
-                  ),
                 ],
               ),
               if (signed)
@@ -225,7 +214,19 @@ class _ExportPageState extends State<ExportPage> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  ElevatedButton.icon(
+                    icon: _signing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(YaruIcons.shield),
+                    label: Text(signed ? 'Re-sign' : 'Sign assertion'),
+                    onPressed:
+                        (_signing || keyName == null) ? null : _sign,
+                  ),
                   FilledButton.tonalIcon(
                     icon: const Icon(YaruIcons.save, size: 18),
                     label: Text(_savedPath == null
