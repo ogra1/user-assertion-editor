@@ -293,6 +293,7 @@ class _UserPageState extends State<UserPage> {
         YaruSection(
           headline: const Text('SSH keys'),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Public keys for passwordless (SSO-style) login. Add at least '
@@ -341,6 +342,7 @@ class _UserPageState extends State<UserPage> {
       ),
       child: showPasswordFields
           ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Generate a crypt(3)-compatible sha512crypt hash. The '
@@ -422,6 +424,7 @@ class _UserPageState extends State<UserPage> {
               ],
             )
           : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FormTextField(
                   label: 'Password hash',

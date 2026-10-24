@@ -128,16 +128,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: YaruWindowTitleBar(
-        title: const Text('User Assertion Editor'),
-        leading: Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: Image.asset('assets/icon.png'),
-          ),
-        ),
+      // No leading icon in the title bar: it sat right next to the brand
+      // icon in the navigation rail and read as a duplicate.
+      appBar: const YaruWindowTitleBar(
+        title: Text('User Assertion Editor'),
       ),
       body: Column(
         children: [
