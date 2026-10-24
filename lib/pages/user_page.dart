@@ -181,31 +181,52 @@ class _UserPageState extends State<UserPage> {
           headline: const Text('Identity'),
           child: Column(
             children: [
-              FormTextField(
-                label: 'Username *',
-                controller: _username,
-                hint: 'e.g. admin',
-                helper:
-                    'Lowercase letters, digits, ".", "_" and "-"; must start with a letter or digit.',
-                onSubmitted: (_) => _commitIdentity(),
-                onChanged: (_) => _commitIdentity(),
+              // Two-column identity grid: username and full name share a row,
+              // the email takes the left column of the same grid (half the
+              // section width), keeping the fields aligned in a single column.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: FormTextField(
+                      label: 'Username *',
+                      controller: _username,
+                      hint: 'e.g. admin',
+                      helper:
+                          'Lowercase letters, digits, ".", "_" and "-"; must start with a letter or digit.',
+                      onSubmitted: (_) => _commitIdentity(),
+                      onChanged: (_) => _commitIdentity(),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FormTextField(
+                      label: 'Full name',
+                      controller: _name,
+                      hint: 'e.g. Ada Lovelace',
+                      onChanged: (_) => _commitIdentity(),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              FormTextField(
-                label: 'Full name',
-                controller: _name,
-                hint: 'e.g. Ada Lovelace',
-                onChanged: (_) => _commitIdentity(),
-              ),
-              const SizedBox(height: 16),
-              FormTextField(
-                label: 'E-mail *',
-                controller: _email,
-                hint: 'e.g. ada@example.com',
-                helper:
-                    'Part of the assertion index — snapd uses it to track the user.',
-                keyboardType: TextInputType.emailAddress,
-                onChanged: (_) => _commitIdentity(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: FormTextField(
+                      label: 'E-mail *',
+                      controller: _email,
+                      hint: 'e.g. ada@example.com',
+                      helper:
+                          'Part of the assertion index — snapd uses it to track the user.',
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) => _commitIdentity(),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Spacer(),
+                ],
               ),
             ],
           ),
