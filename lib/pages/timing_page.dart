@@ -112,18 +112,29 @@ class _TimingPageState extends State<TimingPage> {
           headline: const Text('Validity window'),
           child: Column(
             children: [
-              _DateField(
-                label: 'Valid from (since) *',
-                controller: _since,
-                onPick: () => _pick(true),
-                onChanged: (_) => _commit(),
-              ),
-              const SizedBox(height: 16),
-              _DateField(
-                label: 'Valid until (until) *',
-                controller: _until,
-                onPick: () => _pick(false),
-                onChanged: (_) => _commit(),
+              // Two-column date grid: "Valid from" and "Valid until" share a
+              // row (same pattern as the User page identity grid).
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _DateField(
+                      label: 'Valid from (since) *',
+                      controller: _since,
+                      onPick: () => _pick(true),
+                      onChanged: (_) => _commit(),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _DateField(
+                      label: 'Valid until (until) *',
+                      controller: _until,
+                      onPick: () => _pick(false),
+                      onChanged: (_) => _commit(),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -230,7 +241,7 @@ class _DateField extends StatelessWidget {
     return FormTextField(
       label: label,
       controller: controller,
-      hint: 'RFC 3339, e.g. 2026-10-23T12:00:00Z — or pick via the calendar',
+      hint: 'RFC 3339, e.g. 2026-10-23T12:00:00Z',
       // Tappable calendar at the *start* of the field. It is a separate
       // widget from the text input, so the picker is bound to the icon and
       // the timestamp itself stays fully editable.
