@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:yaru/yaru.dart';
 
 import 'pages/home_page.dart';
@@ -35,6 +36,14 @@ class UserAssertionEditorApp extends StatelessWidget {
           darkTheme: yaru.darkTheme,
           themeMode: ThemeMode.system,
           debugShowCheckedModeBanner: false,
+          // Follow the OS locale so system widgets (e.g. the date picker's
+          // manual entry, month names, weekday order) are localized. The
+          // global delegates are the whole point of this; and we must widen
+          // supportedLocales (it defaults to English-only, which would mask
+          // every other language even when the OS is set to one).
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          supportedLocales:
+              kMaterialSupportedLanguages.map((lang) => Locale(lang)),
           home: const HomePage(),
         );
       },

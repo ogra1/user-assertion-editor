@@ -11,7 +11,11 @@ class FormTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool obscure;
   final bool readOnly;
+  /// A simple leading icon (non-interactive).
   final IconData? prefixIcon;
+  /// A full leading [Widget] (e.g. a tappable icon button). Takes priority
+  /// over [prefixIcon] when both are provided.
+  final Widget? prefix;
   final Widget? suffix;
   final TextInputType? keyboardType;
   final int maxLines;
@@ -29,6 +33,7 @@ class FormTextField extends StatelessWidget {
     this.obscure = false,
     this.readOnly = false,
     this.prefixIcon,
+    this.prefix,
     this.suffix,
     this.keyboardType,
     this.maxLines = 1,
@@ -63,7 +68,8 @@ class FormTextField extends StatelessWidget {
             hintText: hint,
             helperText: helper,
             helperMaxLines: 3,
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+            prefixIcon: prefix ??
+                (prefixIcon != null ? Icon(prefixIcon) : null),
             suffixIcon: suffix,
             isDense: true,
             border: border,

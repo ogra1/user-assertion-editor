@@ -41,6 +41,9 @@ class _TimingPageState extends State<TimingPage> {
     widget.state.refresh();
   }
 
+  /// Opens the date picker bound to the calendar icon. The picked date
+  /// replaces only the date part; the time-of-day of the current value is
+  /// kept (or the current time is used when the field is empty).
   Future<void> _pick(bool since) async {
     final now = DateTime.now().toLocal();
     final current = since
@@ -93,7 +96,6 @@ class _TimingPageState extends State<TimingPage> {
         ? u.until!.difference(u.since!)
         : null;
 
-
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -132,8 +134,7 @@ class _TimingPageState extends State<TimingPage> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 8),
                     Text(
-                      'Valid for ${_fmtDuration(window)} '
-                      '(window.inDays days).',
+                      'Valid for ${_fmtDuration(window)}.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(width: 16),
@@ -207,7 +208,10 @@ class _TimingPageState extends State<TimingPage> {
   }
 }
 
-
+/// A validity date input: an editable RFC 3339 text field with a calendar
+/// icon that opens the date picker. The field itself stays fully
+/// editable — clicking the icon (not the field) is what pops the picker, so
+/// the timestamp can be typed or adjusted by hand.
 class _DateField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -226,9 +230,15 @@ class _DateField extends StatelessWidget {
     return FormTextField(
       label: label,
       controller: controller,
-      hint: '2026-10-23T12:00:00Z (RFC 3339) — click to pick',
-      prefixIcon: Icons.calendar_today_outlined,
-      onTap: onPick,
+      hint: 'RFC 3339, e.g. 2026-10-23T12:00:00Z — or pick via the calendar',
+      // Tappable calendar at the *start* of the field. It is a separate
+      // widget from the text input, so the picker is bound to the icon and
+      // the timestamp itself stays fully editable.
+      prefix: IconButton(
+        icon: const Icon(YaruIcons.calendar),
+        tooltip: 'Pick a date',
+        onPressed: onPick,
+      ),
       onChanged: onChanged,
     );
   }
