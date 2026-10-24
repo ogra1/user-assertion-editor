@@ -1,8 +1,13 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:yaru/yaru.dart';
 
 import '../models/wizard_state.dart';
+import '../services/import_service.dart';
 import '../services/password_hasher.dart';
+import '../services/status_bar_service.dart';
 import '../widgets/form_fields.dart';
 import '../widgets/tag_chip_field.dart';
 
@@ -117,6 +122,33 @@ class _UserPageState extends State<UserPage> {
         '(type, base64 blob, then a comment).';
   }
 
+  /// Loads an existing assertion (or its JSON header) into the editor so it
+  /// can be reviewed and re-signed. This replaces the whole model, so it is
+  /// offered on the first step — before any of the later fields have been
+  /// filled in — rather than buried on the Export step.
+  Future<void> _importExisting() async {
+    try {
+      final picked = await openFile(
+        acceptedTypeGroups: const [
+          XTypeGroup(
+            label: 'Assertion / JSON',
+            extensions: ['assert', 'json', 'txt'],
+          ),
+        ],
+      );
+      if (picked == null) return;
+      final path = picked.path;
+      final text = await File(path).readAsString();
+      final imported = ImportService().import(text);
+      widget.state.replaceModel(imported.user);
+      StatusBarService.instance.success('Imported $path');
+    } on ImportException catch (e) {
+      StatusBarService.instance.error(e.message);
+    } on Exception catch (e) {
+      StatusBarService.instance.error('Could not read file: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final u = widget.state.model;
@@ -124,7 +156,19 @@ class _UserPageState extends State<UserPage> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('User', style: Theme.of(context).textTheme.headlineSmall),
+        Row(
+          children: [
+            Expanded(
+              child: Text('User',
+                  style: Theme.of(context).textTheme.headlineSmall),
+            ),
+            TextButton.icon(
+              icon: const Icon(YaruIcons.document_open, size: 18),
+              label: const Text('Import existing'),
+              onPressed: _importExisting,
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         Text(
           'Who is this assertion for, and how do they log in?',
@@ -167,8 +211,6 @@ class _UserPageState extends State<UserPage> {
           ),
         ),
         const SizedBox(height: 24),
-        _buildAuthSection(context),
-        const SizedBox(height: 24),
         YaruSection(
           headline: const Text('SSH keys'),
           child: Column(
@@ -197,6 +239,8 @@ class _UserPageState extends State<UserPage> {
             ],
           ),
         ),
+        const SizedBox(height: 24),
+        _buildAuthSection(context),
       ],
     );
   }
@@ -229,7 +273,7 @@ class _UserPageState extends State<UserPage> {
                 ),
                 const SizedBox(height: 16),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: FormTextField(
@@ -247,13 +291,21 @@ class _UserPageState extends State<UserPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(YaruIcons.shield),
-                        label: const Text('Hash it'),
-                        onPressed: _hashPassword,
-                      ),
+                    // Push the button down by exactly one field-label height +
+                    // gap so its top edge lines up with the two input boxes
+                    // (the FormTextField renders a label above the field).
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(' ',
+                            style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          icon: const Icon(YaruIcons.shield),
+                          label: const Text('Hash it'),
+                          onPressed: _hashPassword,
+                        ),
+                      ],
                     ),
                   ],
                 ),

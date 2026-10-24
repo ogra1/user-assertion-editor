@@ -12,7 +12,6 @@ import '../services/assertion_builder.dart';
 import '../services/assertion_verifier.dart';
 import '../services/sign_service.dart';
 import '../services/status_bar_service.dart';
-import '../services/import_service.dart';
 import '../theme/status_colors.dart';
 
 /// Step 5 — review the JSON, sign, verify, and save the result.
@@ -142,36 +141,6 @@ class _ExportPageState extends State<ExportPage> {
     }
   }
 
-  Future<void> _importExisting() async {
-    try {
-      final picked = await openFile(
-        acceptedTypeGroups: const [
-          XTypeGroup(
-            label: 'Assertion / JSON',
-            extensions: ['assert', 'json', 'txt'],
-          ),
-        ],
-        initialDirectory: _lastDir,
-      );
-      if (picked == null) return;
-      final path = picked.path;
-      final text = await File(path).readAsString();
-      final imported = ImportService().import(text);
-      widget.state.replaceModel(imported.user);
-      _lastDir = p.dirname(path);
-      setState(() {
-        _savedPath = null;
-        _jsonSavedPath = null;
-        _previewTab = 'json';
-      });
-      StatusBarService.instance.success('Imported $path');
-    } on ImportException catch (e) {
-      StatusBarService.instance.error(e.message);
-    } on Exception catch (e) {
-      StatusBarService.instance.error('Could not read file: $e');
-    }
-  }
-
   Future<void> _copy(String text) async {
     try {
       await Clipboard.setData(ClipboardData(text: text));
@@ -190,19 +159,8 @@ class _ExportPageState extends State<ExportPage> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('Export',
-                  style: Theme.of(context).textTheme.headlineSmall),
-            ),
-            TextButton.icon(
-              icon: const Icon(YaruIcons.document_open, size: 18),
-              label: const Text('Import existing'),
-              onPressed: _importExisting,
-            ),
-          ],
-        ),
+        Text('Export',
+            style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
           'Review the unsigned header, sign it, and save the resulting '
