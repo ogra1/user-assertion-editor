@@ -10,6 +10,12 @@ import '../services/assertion_verifier.dart';
 class WizardState extends ChangeNotifier {
   final SystemUser model = SystemUser.defaults();
 
+  /// Bumped every time [replaceModel] swaps in a different model (e.g. an
+  /// import). Step pages watch it to re-seed their [TextEditingController]s
+  /// from the new model — the controllers are local state that [refresh]
+  /// alone cannot reach.
+  int modelGeneration = 0;
+
   String? selectedKeyName;
   SignOutput? signOutput;
 
@@ -82,6 +88,7 @@ class WizardState extends ChangeNotifier {
       ..clear()
       ..addAll(imported.serials);
     signOutput = null;
+    modelGeneration++;
     notifyListeners();
   }
 

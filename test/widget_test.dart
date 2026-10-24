@@ -6,6 +6,8 @@ import 'package:user_assertion_editor/models/system_user_model.dart';
 import 'package:user_assertion_editor/models/wizard_state.dart';
 import 'package:user_assertion_editor/models/wizard_step.dart';
 import 'package:user_assertion_editor/pages/home_page.dart';
+import 'package:user_assertion_editor/pages/user_page.dart';
+import 'package:user_assertion_editor/widgets/form_fields.dart';
 import 'package:user_assertion_editor/widgets/tag_chip_field.dart';
 import 'package:user_assertion_editor/services/assertion_builder.dart';
 import 'package:user_assertion_editor/services/assertion_parser.dart';
@@ -93,6 +95,50 @@ void main() {
     expect(find.text('Username *'), findsOneWidget);
     expect(find.text('Brand ID *'), findsNothing);
     expect(find.text('Signing Key'), findsOneWidget); // nav rail destination
+  });
+
+  testWidgets('importing an assertion refreshes the User page (regression: stale form after import)', (tester) async {
+    final state = WizardState();
+    await tester.pumpWidget(YaruTheme(
+      builder: (context, yaru, child) => MaterialApp(
+        theme: yaru.theme,
+        darkTheme: yaru.darkTheme,
+        home: Scaffold(body: UserPage(state: state)),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Find a form field's TextField by its label (the TextFields are
+    // label-less; the label lives on the FormTextField).
+    Finder fieldByLabel(String label) => find.descendant(
+        of: find.byWidgetPredicate(
+            (w) => w is FormTextField && w.label == label),
+        matching: find.byType(TextField));
+    String? textOf(String label) {
+      final f = fieldByLabel(label);
+      final w = tester.widget<TextField>(f);
+      return w.controller?.text;
+    }
+
+    // Before the import the form shows the editor defaults (empty).
+    expect(textOf('Username *'), isEmpty);
+
+    // Simulate the import: the whole model is swapped.
+    final imported = SystemUser()
+      ..username = 'imported-admin'
+      ..name = 'Imported User'
+      ..email = 'imported@example.com'
+      ..sshKeys.add('ssh-ed25519 AAA imported@host');
+    state.replaceModel(imported);
+    await tester.pumpAndSettle();
+
+    // Every field must now show the imported values, and the imported SSH
+    // key must appear as a chip.
+    expect(textOf('Username *'), 'imported-admin');
+    expect(textOf('Full name'), 'Imported User');
+    expect(textOf('E-mail *'), 'imported@example.com');
+    expect(find.text('ssh-ed25519 AAA imported@host'), findsOneWidget);
+    state.dispose();
   });
 
   test('defaults produce an SSO-style (SSH, no password) header', () {

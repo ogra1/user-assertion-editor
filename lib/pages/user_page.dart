@@ -35,19 +35,76 @@ class _UserPageState extends State<UserPage> {
   String? _mismatch;
   String? _passwordError;
 
+  /// The model generation this view was seeded from. An import swaps the
+  /// whole model under us (a new [WizardState.modelGeneration]), and the
+  /// local controllers — and the TagChipField's draft — cannot be reached by
+  /// a plain refresh, so the page is rebuilt from the new model.
+  int _seededGeneration = -1;
+
   @override
   void initState() {
     super.initState();
+    _seededGeneration = widget.state.modelGeneration;
+    _seedControllers();
+    // Self-sufficient: react to a model swap even without the home page
+    // rebuilding us. A plain refresh() is a no-op for this page — only a
+    // generation change re-seeds anything.
+    widget.state.addListener(_onStateChanged);
+  }
+
+  void _onStateChanged() {
+    if (!mounted) return;
+    _rescheduleIfStale();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _rescheduleIfStale();
+  }
+
+  @override
+  void didUpdateWidget(covariant UserPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The home page rebuilds this page on every WizardState change; an
+    // import is the one change that invalidates the local controllers.
+    _rescheduleIfStale();
+  }
+
+  /// An import swaps the whole model under this page (a new
+  /// [WizardState.modelGeneration]). The local controllers and the
+  /// TagChipField's draft cannot be reached by a plain refresh, so re-seed
+  /// the controllers and give the page subtree a new identity — which drops
+  /// the SSH-keys TagChipField so its draft starts empty too.
+  void _rescheduleIfStale() {
+    final generation = widget.state.modelGeneration;
+    if (generation == _seededGeneration) return;
+    setState(() {
+      _seededGeneration = generation;
+      _seedControllers();
+    });
+  }
+
+  /// (Re)seeds every local controller from the model. Only called from
+  /// event handlers / rebuilds — never from build().
+  void _seedControllers() {
     final u = widget.state.model;
     _username.text = u.username;
     _name.text = u.name;
     _email.text = u.email;
     _usingHash = u.hasPassword;
-    if (u.passwordHash != null) _passwordHashController.text = u.passwordHash!;
+    if (u.passwordHash != null) {
+      _passwordHashController.text = u.passwordHash!;
+    } else {
+      _passwordHashController.clear();
+    }
+    _password.clear();
+    _confirm.clear();
   }
 
   @override
   void dispose() {
+    widget.state.removeListener(_onStateChanged);
     _username.dispose();
     _name.dispose();
     _email.dispose();
@@ -154,6 +211,7 @@ class _UserPageState extends State<UserPage> {
     final u = widget.state.model;
 
     return ListView(
+      key: ValueKey(_seededGeneration),
       padding: const EdgeInsets.all(24),
       children: [
         Row(
