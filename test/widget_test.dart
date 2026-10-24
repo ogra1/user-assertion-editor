@@ -190,4 +190,49 @@ void main() {
             .any((c) => c.label == 'Username' && c.status == CheckStatus.fail),
         isTrue);
   });
+
+  testWidgets('TagChipField commits on Enter (newline) when multiline (regression: SSH key field)', (tester) async {
+    final entered = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: TagChipField(
+          label: 'Public keys',
+          values: entered,
+          // Contract: onChanged receives the NEW full list -> replace.
+          onChanged: (l) => entered
+            ..clear()
+            ..addAll(l),
+          multiline: true,
+          validateEntry: (v) => v.startsWith('ssh-') ? null : 'not a key',
+        ),
+      ),
+    ));
+
+    final tf = find.byType(TextField);
+    await tester.enterText(tf, 'ssh-ed25519 AAA user@h');
+    await tester.pump();
+    expect(entered, isEmpty, reason: 'draft must not commit on keystrokes');
+
+    // A multiline TextField turns Enter into a newline, not onSubmitted.
+    // updateEditingValue simulates exactly that IME update, and it must
+    // commit the entry.
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+          text: 'ssh-ed25519 AAA user@h\n',
+          selection: TextSelection.collapsed(offset: 23)));
+    await tester.pump();
+    expect(entered, ['ssh-ed25519 AAA user@h'],
+        reason: 'Enter (newline) must commit the key');
+    expect(tester.widget<TextField>(tf).controller!.text, isEmpty,
+        reason: 'draft clears after committing on newline');
+
+    // An invalid entry on Enter must NOT commit and must surface the error.
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+          text: 'nope\n', selection: TextSelection.collapsed(offset: 5)));
+    await tester.pump();
+    expect(entered, ['ssh-ed25519 AAA user@h'],
+        reason: 'invalid entry must not commit');
+    expect(find.text('not a key'), findsOneWidget);
+  });
 }

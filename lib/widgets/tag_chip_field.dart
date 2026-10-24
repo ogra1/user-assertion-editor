@@ -40,17 +40,43 @@ class _TagChipFieldState extends State<TagChipField> {
     super.dispose();
   }
 
-  /// Watches for comma separators and commits the part before the comma;
-  /// the rest of the text becomes the new draft.
+  /// Watches for separators — always commas, plus newlines when the field is
+  /// [multiline] — and commits the complete entries, leaving the trailing
+  /// uncommitted part as the draft. Detecting the newline is what makes Enter
+  /// work in a multiline field: a multiline TextField inserts a line break
+  /// instead of firing onSubmitted, so the newline is handled right here.
   void _onTextChanged(String text) {
-    final comma = text.lastIndexOf(',');
-    if (comma < 0) return;
-    _controller.value = TextEditingValue(
-      text: text.substring(comma + 1),
-      selection: TextSelection.collapsed(
-          offset: text.length - comma - 1),
-    );
-    _commit(text.substring(0, comma));
+    final separators = widget.multiline ? RegExp(r'[,\n]') : RegExp(r',');
+    final segments = text.split(separators);
+    final draft = segments.removeLast();
+
+    final added = <String>[];
+    for (final s in segments) {
+      final v = s.trim();
+      if (v.isEmpty) continue;
+      final err = widget.validateEntry?.call(v);
+      if (err != null) {
+        // Non-destructive: leave the user's text in the field so they can fix
+        // it, and surface the error. Nothing commits this round.
+        setState(() => _entryError = err);
+        return;
+      }
+      added.add(v);
+    }
+
+    if (added.isNotEmpty) {
+      widget.onChanged([...widget.values, ...added]);
+      setState(() => _entryError = null);
+    }
+
+    // Strip the committed separators out of the field, leaving only the
+    // in-progress draft (repositioned to its tail, matching the comma path).
+    if (text != draft) {
+      _controller.value = TextEditingValue(
+        text: draft,
+        selection: TextSelection.collapsed(offset: draft.length),
+      );
+    }
   }
 
   void _commit(String raw) {
